@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -41,3 +42,17 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return str(self.email)
+
+
+class Checklist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_checklists')
+    created_at = models.DateTimeField(default=timezone.now)
+    score = models.DecimalField(decimal_places=4, max_digits=5, default=0, validators=[MinValueValidator(limit_value=0), MaxValueValidator(limit_value=1)])
+    completed = models.BooleanField(default=False)
+
+
+class Regret(models.Model):
+    checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name='checklist_regrets')
+    description = models.CharField(max_length=255)
+    created_at = models.DateTimeField(default=timezone.now)
+    success = models.BooleanField(default=False)

@@ -17,7 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import UserViewSet
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
+from .views import *
 
 
 router = DefaultRouter()
@@ -25,5 +27,17 @@ router.register(r'users', UserViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include(router.urls)),
 ]
+
+urlpatterns += [
+    path("api/checklists/", ChecklistListCreateView.as_view(), name="checklists"),
+    path("api/checklists/<int:pk>/regrets/", RegretListCreateView.as_view(), name="regrets"),
+    path("api/checklists/<int:pk>/regrets/<int:id>/", RegretRetrieveUpdateView.as_view(), name="update_regrets"),
+]
+
+
+# swagger urls
+urlpatterns += [
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("docs/", SpectacularSwaggerView.as_view(template_name="swagger-ui.html", url_name="schema"), name="swagger-ui"),
+    ]

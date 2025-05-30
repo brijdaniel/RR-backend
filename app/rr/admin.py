@@ -27,3 +27,7 @@ class UserAdmin(BaseUserAdmin):
     )
 
     search_fields = ['email', 'name']
+
+
+admin.site.register(Checklist)
+admin.site.register(Regret)
