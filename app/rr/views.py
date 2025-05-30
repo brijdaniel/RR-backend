@@ -12,16 +12,22 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class ChecklistListCreateView(ListCreateAPIView):
-    queryset = Checklist.objects.all()
     serializer_class = ChecklistSerializer
+
+    def get_queryset(self):
+        return Checklist.objects.filter(user=self.request.user)
 
 
 class RegretListCreateView(ListCreateAPIView):
-    queryset = Regret.objects.all()
     serializer_class = RegretSerializer
+
+    def get_queryset(self):
+        return Regret.objects.filter(checklist__user=self.request.user)
 
 
 class RegretRetrieveUpdateView(RetrieveUpdateAPIView):
-    queryset = Regret.objects.all()
     serializer_class = RegretSerializer
     lookup_field = "id"
+
+    def get_queryset(self):
+        return Regret.objects.filter(checklist__user=self.request.user)
