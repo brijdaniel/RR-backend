@@ -20,7 +20,7 @@ class ChecklistListCreateView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Checklist.objects.filter(user=self.request.user)
+        return Checklist.objects.filter(user=self.request.user, created_at__date=timezone.now().date())
 
 
 class RegretListCreateView(ListCreateAPIView):

@@ -2,8 +2,9 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
-
-from rest_framework.exceptions import ValidationError
+from django.db.models.functions import ExtractDay, ExtractMonth, ExtractYear
+from django.core.exceptions import ValidationError
+from datetime import datetime, time
 
 
 class UserManager(BaseUserManager):
@@ -53,6 +54,27 @@ class Checklist(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     score = models.DecimalField(decimal_places=4, max_digits=5, default=0, validators=[MinValueValidator(limit_value=0), MaxValueValidator(limit_value=1)])
     completed = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'created_at'])
+        ]
+
+    def save(self, *args, **kwargs):
+        # Get the date part of created_at
+        check_date = self.created_at.date()
+        
+        # Check if there's already a checklist for this user on this date
+        if not self.pk:  # Only check on creation
+            existing = Checklist.objects.filter(
+                user=self.user,
+                created_at__date=check_date
+            ).exists()
+            
+            if existing:
+                raise ValidationError('A checklist for this user already exists for this date.')
+        
+        super().save(*args, **kwargs)
 
 
 class Regret(models.Model):
