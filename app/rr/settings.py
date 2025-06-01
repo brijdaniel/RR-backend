@@ -44,6 +44,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'drf_spectacular',
     'rr'
 ]
 
@@ -140,4 +144,13 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',  # for forms testing
     ]
+}
+
+# JWT Settings
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Short-lived access token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=36500),  # ~100 years, effectively never expires
+    'ROTATE_REFRESH_TOKENS': True,  # Get a new refresh token when refreshing access token
+    'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens after rotation for security
 }
