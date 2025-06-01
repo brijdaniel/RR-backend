@@ -17,5 +17,15 @@ class ChecklistFilter(filters.FilterSet):
 
     def filter_today(self, queryset, name, value):
         if value:
-            return queryset.filter(created_at__date=timezone.now().date())
+            today = timezone.now().date()
+
+            # Try to get today's checklist
+            today_checklist = queryset.filter(created_at__date=today)
+            
+            if not today_checklist.exists() and self.request and hasattr(self.request, 'user'):
+                # Create a new checklist for today
+                new_checklist = Checklist.objects.create(user=self.request.user)
+                return Checklist.objects.filter(pk=new_checklist.pk)
+            
+            return today_checklist
         return queryset
