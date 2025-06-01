@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 class UserCreateView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdminUser]
+    # permission_classes = [IsAdminUser]
 
 
 class ChecklistListCreateView(ListAPIView):
