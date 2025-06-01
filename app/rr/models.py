@@ -13,7 +13,7 @@ class UserManager(BaseUserManager):
         user = self.model(username=username, **extra_fields)
         user.save(using=self._db)
 
-        # Set the password if provided in extra_fields
+        # Set the password if provided in extra_fields - required for superuser
         password = extra_fields.pop('password', None)
         if password:
             user.set_password(password)

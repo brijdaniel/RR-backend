@@ -1,0 +1,13 @@
+services:
+  web:
+    build: .
+    container_name: rr-backend
+    command: python app/manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+
+    restart: unless-stopped 
