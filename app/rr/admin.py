@@ -9,12 +9,11 @@ from .models import *
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    ordering = ['email']
-    list_display = ['email', 'name', 'is_staff']
+    ordering = ['username']
+    list_display = ['username', 'is_staff']
 
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        (_('Personal Info'), {'fields': ('name',)}),
+        (_('Personal Info'), {'fields': ('username',)}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         (_('Important dates'), {'fields': ('last_login',)}),
     )
@@ -22,11 +21,11 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'name', 'password1', 'password2'),
+            'fields': ('username'),
         }),
     )
 
-    search_fields = ['email', 'name']
+    search_fields = ['username']
 
 
 admin.site.register(Checklist)
