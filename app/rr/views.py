@@ -1,4 +1,3 @@
-from rest_framework import viewsets
 from rest_framework.generics import RetrieveAPIView, CreateAPIView, ListCreateAPIView, ListAPIView, RetrieveUpdateAPIView, RetrieveUpdateDestroyAPIView, DestroyAPIView
 from rest_framework.exceptions import ValidationError
 
@@ -10,7 +9,7 @@ from .serializers import *
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserCreateView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
