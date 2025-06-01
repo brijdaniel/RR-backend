@@ -5,6 +5,9 @@ FROM python:3-slim-bullseye
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# Copy project files
+COPY . .
+
 # Set working directory
 WORKDIR /app
 
@@ -19,9 +22,6 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --upgrade pip && pip install -r requirements.txt
-
-# Copy project files
-COPY . .
 
 # Expose port (optional if using docker-compose)
 EXPOSE 8000
