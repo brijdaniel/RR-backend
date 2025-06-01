@@ -31,7 +31,6 @@ urlpatterns = [
 # Simple JWT
 urlpatterns += [
     path('auth/user/', UserCreateView.as_view(), name='create_user'),
-    path('auth/jwt/create/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/jwt/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 
