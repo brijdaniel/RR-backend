@@ -3,3 +3,4 @@ djangorestframework
 drf-spectacular
 python-dotenv
 pylint-django>=2.5.3
+djangorestframework_simplejwt

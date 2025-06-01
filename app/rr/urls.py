@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from .views import *
@@ -25,10 +26,18 @@ from .views import *
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
 
+# Admin panel
 urlpatterns = [
     path('admin/', admin.site.urls),
 ]
 
+# Simple JWT
+urlpatterns += [
+    path('auth/jwt/create/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/jwt/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+]
+
+# API
 urlpatterns += [
     path("api/checklists/", ChecklistListCreateView.as_view(), name="checklists"),
     path("api/checklists/<int:pk>/regrets/", RegretListCreateView.as_view(), name="regrets"),
@@ -36,7 +45,7 @@ urlpatterns += [
 ]
 
 
-# swagger urls
+# Swagger
 urlpatterns += [
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path("docs/", SpectacularSwaggerView.as_view(template_name="swagger-ui.html", url_name="schema"), name="swagger-ui"),
