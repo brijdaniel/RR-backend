@@ -1,11 +1,13 @@
 from rest_framework.generics import RetrieveAPIView, CreateAPIView, ListCreateAPIView, ListAPIView, RetrieveUpdateAPIView, RetrieveUpdateDestroyAPIView, DestroyAPIView
 from rest_framework.exceptions import ValidationError
+from django_filters import rest_framework as filters
 
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from .models import *
 from .serializers import *
+from .filters import ChecklistFilter
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 
@@ -18,9 +20,11 @@ class UserCreateView(CreateAPIView):
 class ChecklistListCreateView(ListAPIView):
     serializer_class = ChecklistSerializer
     permission_classes = [IsAuthenticated]
+    filterset_class = ChecklistFilter
+    filter_backends = (filters.DjangoFilterBackend,)
 
     def get_queryset(self):
-        return Checklist.objects.filter(user=self.request.user, created_at__date=timezone.now().date())
+        return Checklist.objects.filter(user=self.request.user)
 
 
 class RegretListCreateView(ListCreateAPIView):
