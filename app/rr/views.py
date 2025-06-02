@@ -61,12 +61,20 @@ class RegretRetrieveUpdateView(RetrieveUpdateAPIView):
         if regret.checklist.created_at.date() != timezone.now().date():
             raise ValidationError("Too late, the regret is real!")
         
-        # Only allow success field to be updated
+        # Only allow success field to be updated from false to true
         mutable_data = request.data.copy()
         allowed_keys = {'success'}
         for key in list(mutable_data.keys()):
             if key not in allowed_keys:
                 del mutable_data[key]
+
+        # Check if trying to update success field
+        if 'success' in mutable_data:
+            # Only allow updating from false to true
+            if regret.success:
+                raise ValidationError("Cannot undo a successful regret resolution!")
+            if not mutable_data['success']:
+                raise ValidationError("Can only update success from false to true!")
 
         request._full_data = mutable_data  # Forces DRF to use this cleaned data
         return super().update(request, *args, **kwargs)

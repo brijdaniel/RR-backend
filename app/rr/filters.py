@@ -24,8 +24,8 @@ class ChecklistFilter(filters.FilterSet):
             
             if not today_checklist.exists() and self.request:
                 # Create a new checklist for today
-                new_checklist = Checklist.objects.create(user=self.request.user)
-                return new_checklist
+                today_checklist = Checklist.objects.create(user=self.request.user)
+                today_checklist = Checklist.objects.filter(pk=today_checklist.pk)
             
             return today_checklist
         return queryset
