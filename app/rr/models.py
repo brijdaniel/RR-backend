@@ -5,14 +5,27 @@ from django.utils import timezone
 from django.db.models.functions import ExtractDay, ExtractMonth, ExtractYear
 from django.core.exceptions import ValidationError
 from datetime import datetime, time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class UserManager(BaseUserManager):
     def create_user(self, username, **extra_fields):
         if not username:
             raise ValidationError("Email must be set")
+        
+        logger.info(f"Creating user with username: {username}")
+        logger.info(f"Extra fields before setdefault: {extra_fields}")
+        
+        extra_fields.setdefault('is_active', True)
+        logger.info(f"Extra fields after setdefault: {extra_fields}")
+        
         user = self.model(username=username, **extra_fields)
+        logger.info(f"User object created, is_active = {user.is_active}")
+        
         user.save(using=self._db)
+        logger.info(f"User saved to database, is_active = {user.is_active}")
 
         # Set the password if provided in extra_fields - required for superuser
         password = extra_fields.pop('password', None)

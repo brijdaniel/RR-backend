@@ -1,6 +1,7 @@
 from rest_framework.generics import RetrieveAPIView, CreateAPIView, ListCreateAPIView, ListAPIView, RetrieveUpdateAPIView, RetrieveUpdateDestroyAPIView, DestroyAPIView
 from rest_framework.exceptions import ValidationError
 from django_filters import rest_framework as filters
+import logging
 
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -10,11 +11,18 @@ from .serializers import *
 from .filters import ChecklistFilter
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
+logger = logging.getLogger(__name__)
 
 class UserCreateView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # permission_classes = [IsAdminUser]
+    permission_classes = []  # Allow anyone to register
+
+    def perform_create(self, serializer):
+        logger.info("About to create user")
+        user = serializer.save()
+        logger.info(f"User created with is_active = {user.is_active}")
+        return user
 
 
 class ChecklistListCreateView(ListAPIView):

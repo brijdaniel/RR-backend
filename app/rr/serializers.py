@@ -5,10 +5,12 @@ from .models import *
 
 class UserSerializer(serializers.ModelSerializer):
     tokens = serializers.SerializerMethodField()
+    is_active = serializers.BooleanField(read_only=True, default=True)
 
     class Meta:
         model = User
         fields = ['id', 'username', 'is_active', 'tokens']
+        read_only_fields = ['is_active']
 
     def get_tokens(self, user):
         refresh = RefreshToken.for_user(user)
@@ -18,6 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+        validated_data['is_active'] = True
         user = User.objects.create_user(**validated_data)
         return user
 
