@@ -40,7 +40,7 @@ class RegretListCreateView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Regret.objects.filter(checklist__user=self.request.user)
+        return Regret.objects.filter(checklist__user=self.request.user, checklist__id=self.kwargs["pk"])
     
     def perform_create(self, serializer):
         checklist = get_object_or_404(Checklist, pk=self.kwargs["pk"], user=self.request.user)
