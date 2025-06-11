@@ -65,7 +65,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Checklist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_checklists')
     created_at = models.DateTimeField(default=timezone.now)
-    score = models.DecimalField(decimal_places=4, max_digits=5, default=0, validators=[MinValueValidator(limit_value=0), MaxValueValidator(limit_value=1)])
+    score = models.DecimalField(decimal_places=4, max_digits=5, default=1.0, validators=[MinValueValidator(limit_value=0), MaxValueValidator(limit_value=1)])
     completed = models.BooleanField(default=False)
 
     class Meta:
