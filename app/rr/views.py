@@ -2,6 +2,7 @@ from rest_framework.generics import RetrieveAPIView, CreateAPIView, ListCreateAP
 from rest_framework.exceptions import ValidationError
 from django_filters import rest_framework as filters
 import logging
+from rest_framework.response import Response
 
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -78,3 +79,27 @@ class RegretRetrieveUpdateView(RetrieveUpdateAPIView):
 
         request._full_data = mutable_data  # Forces DRF to use this cleaned data
         return super().update(request, *args, **kwargs)
+
+
+class UserLoginOrRegisterView(CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = []  # Allow anyone to access
+
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        if not username:
+            raise ValidationError("Username is required")
+
+        # Try to get existing user
+        try:
+            user = User.objects.get(username=username)
+            # User exists, return their tokens
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            # User doesn't exist, create new user
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+            return Response(serializer.data, status=201)
