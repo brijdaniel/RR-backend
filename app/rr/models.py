@@ -74,19 +74,6 @@ class Checklist(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        # Get the date part of created_at
-        check_date = self.created_at.date()
-        
-        # Check if there's already a checklist for this user on this date
-        if not self.pk:  # Only check on creation
-            existing = Checklist.objects.filter(
-                user=self.user,
-                created_at__date=check_date
-            ).exists()
-            
-            if existing:
-                raise ValidationError('A checklist for this user already exists for this date.')
-        
         super().save(*args, **kwargs)
 
 
