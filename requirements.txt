@@ -6,3 +6,4 @@ pylint-django>=2.5.3
 djangorestframework_simplejwt
 django-filter
 pytz
+psycopg2-binary
