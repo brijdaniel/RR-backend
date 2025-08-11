@@ -33,6 +33,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = [
+    'https://rr-backend-qirs.onrender.com',
+    'http://localhost:8000',  # for local development
+]
+
 
 # Application definition
 
