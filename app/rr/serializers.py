@@ -26,6 +26,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ChecklistSerializer(serializers.ModelSerializer):
+    score = serializers.FloatField()  # Force float conversion to preserve decimals
+    
     class Meta:
         model = Checklist
         fields = '__all__'
