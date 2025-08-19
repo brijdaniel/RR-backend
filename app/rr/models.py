@@ -76,10 +76,10 @@ class User(AbstractBaseUser, PermissionsMixin):
             
             if checklist:
                 return float(checklist.score)
-            return 1.0  # Default score if no checklist
+            return -1  # No checklist available for this date
         except Exception as e:
             logger.error(f"Error calculating regret index for user {self.id}: {e}")
-            return 1.0
+            return -1  # Error case also returns -1
     
     def refresh_counts(self):
         """Refresh follower and following counts from actual relationships"""
