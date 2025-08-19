@@ -115,7 +115,7 @@ curl -X DELETE "https://your-domain.com/api/network/unfollow/johndoe/" \
 
 **Endpoint:** `GET /api/network/list/<list_type>/`
 
-**Description:** Get a list of users you're following or users following you, including their regret indexes.
+**Description:** Get a list of users you're following or users following you, including their latest checklist scores and creation timestamps.
 
 **Parameters:**
 - `list_type` (path): Either "following" or "followers"
@@ -130,19 +130,19 @@ curl -X DELETE "https://your-domain.com/api/network/unfollow/johndoe/" \
             "id": 123,
             "username": "johndoe",
             "regret_index": 0.75,
-            "checklist_created_at": "2024-03-15T08:00:00Z",
+            "checklist_created_at": "2025-08-17T08:00:00Z",
             "followers_count": 5,
             "following_count": 3,
-            "date_joined": "2024-01-15T10:30:00Z"
+            "date_joined": "2025-01-15T10:30:00Z"
         },
         {
             "id": 456,
             "username": "janedoe",
             "regret_index": 0.25,
-            "checklist_created_at": "2024-03-15T09:30:00Z",
+            "checklist_created_at": "2025-08-16T14:20:00Z",
             "followers_count": 8,
             "following_count": 2,
-            "date_joined": "2024-02-01T14:20:00Z"
+            "date_joined": "2025-02-01T14:20:00Z"
         }
     ]
 }
@@ -233,31 +233,36 @@ curl -X PATCH "https://your-domain.com/api/network/settings/" \
     "id": 123,
     "username": "johndoe",
     "regret_index": 0.75,
-    "checklist_created_at": "2024-03-15T08:00:00Z",
+    "checklist_created_at": "2025-08-17T08:00:00Z",
     "followers_count": 5,
     "following_count": 3,
-    "date_joined": "2024-01-15T10:30:00Z"
+    "date_joined": "2025-01-15T10:30:00Z"
 }
 ```
+
+**Key Changes:**
+- `regret_index`: Now returns actual score from latest checklist (not calculated)
+- `checklist_created_at`: Latest checklist creation time (not filtered by today)
+- Users without checklists are excluded from the response
+- Frontend handles all date filtering and logic
 
 ---
 
 ## Regret Index
 
-The **regret index** is a score between 0.0 and 1.0 that represents how well a user is managing their regrets for the current day:
+The **regret_index** is the actual score from the user's latest checklist:
 
+- **Source**: Latest checklist score (regardless of date)
+- **Range**: 0.0 to 1.0
 - **0.0**: Perfect day - all regrets resolved successfully
 - **0.5**: Half of regrets resolved
-- **1.0**: No regrets resolved or no checklist for today
+- **1.0**: No regrets resolved
 
-The index is calculated as:
-```
-regret_index = incomplete_regrets / total_regrets
-```
+**Note**: The backend no longer calculates regret indexes or filters by today's date. It simply returns the score from the most recent checklist, allowing the frontend to handle all date logic and filtering.
 
 ## Checklist Creation Time
 
-The **checklist_created_at** field shows when the user created their daily checklist for the current day:
+The **checklist_created_at** field shows when the user created their latest checklist:
 
 - **Format**: ISO 8601 with UTC timezone
 - **Example**: `"2025-08-17T18:00:00Z"`
@@ -266,11 +271,12 @@ The **checklist_created_at** field shows when the user created their daily check
   - Time: HH:mm:ss (18:00:00)
   - Timezone: Z (Zulu time = UTC)
   - Separator: T between date and time
-- **Null value**: If no checklist exists for today
+- **Source**: Latest checklist creation time (regardless of date)
 - **Timezone**: Always in UTC (Z suffix)
+- **Never null**: Users without checklists are excluded from the response
 
 This field is useful for:
-- Showing when users started their daily habit tracking
+- Showing when users last created a checklist
 - Understanding user activity patterns
 - Providing context for the regret index
 - Perfect compatibility with JavaScript `new Date()` parsing

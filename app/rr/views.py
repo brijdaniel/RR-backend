@@ -342,35 +342,28 @@ class NetworkListView(APIView):
                 networks = Network.objects.filter(following=request.user).select_related('follower')
                 users = [network.follower for network in networks]
             
-            # Get regret indexes for today
-            today = timezone.now().date()
             user_data = []
             
             for user in users:
                 try:
-                    regret_index = user.get_regret_index(today)
+                    # Get the latest checklist for this user (regardless of date)
+                    latest_checklist = user.user_checklists.order_by('-created_at').first()
                     
-                    # Get today's checklist creation time
-                    today_checklist = user.user_checklists.filter(
-                        created_at__date=today
-                    ).first()
-                    
-                    checklist_created_at = None
-                    if today_checklist:
-                        # Format as ISO 8601 UTC with 'Z' suffix as required by frontend
-                        # Must be: YYYY-MM-DDTHH:mm:ssZ (e.g., "2025-08-17T18:00:00Z")
-                        utc_time = today_checklist.created_at.astimezone(pytz.UTC)
-                        checklist_created_at = utc_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-                    
-                    user_data.append({
-                        "id": user.id,
-                        "username": user.username,
-                        "regret_index": regret_index,
-                        "checklist_created_at": checklist_created_at,
-                        "followers_count": max(0, user.followers_count),  # Ensure non-negative
-                        "following_count": max(0, user.following_count),  # Ensure non-negative
-                        "date_joined": user.date_joined
-                    })
+                    if latest_checklist:
+                        # Send actual score and UTC creation timestamp
+                        user_data.append({
+                            "id": user.id,
+                            "username": user.username,
+                            "regret_index": float(latest_checklist.score),
+                            "checklist_created_at": latest_checklist.created_at.astimezone(pytz.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                            "followers_count": max(0, user.followers_count),
+                            "following_count": max(0, user.following_count),
+                            "date_joined": user.date_joined
+                        })
+                    else:
+                        # User has no checklists at all - skip them
+                        continue
+                        
                 except Exception as e:
                     logger.error(f"Error processing user {user.id} in network list: {e}")
                     # Skip problematic users but continue with others
