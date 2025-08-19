@@ -131,6 +131,7 @@ curl -X DELETE "https://your-domain.com/api/network/unfollow/johndoe/" \
             "username": "johndoe",
             "regret_index": 0.75,
             "checklist_created_at": "2025-08-17T08:00:00Z",
+            "allow_networking": true,
             "followers_count": 5,
             "following_count": 3,
             "date_joined": "2025-01-15T10:30:00Z"
@@ -140,6 +141,7 @@ curl -X DELETE "https://your-domain.com/api/network/unfollow/johndoe/" \
             "username": "janedoe",
             "regret_index": 0.25,
             "checklist_created_at": "2025-08-16T14:20:00Z",
+            "allow_networking": false,
             "followers_count": 8,
             "following_count": 2,
             "date_joined": "2025-02-01T14:20:00Z"
@@ -234,6 +236,7 @@ curl -X PATCH "https://your-domain.com/api/network/settings/" \
     "username": "johndoe",
     "regret_index": 0.75,
     "checklist_created_at": "2025-08-17T08:00:00Z",
+    "allow_networking": true,
     "followers_count": 5,
     "following_count": 3,
     "date_joined": "2025-01-15T10:30:00Z"
@@ -243,6 +246,7 @@ curl -X PATCH "https://your-domain.com/api/network/settings/" \
 **Key Changes:**
 - `regret_index`: Now returns actual score from latest checklist (not calculated)
 - `checklist_created_at`: Latest checklist creation time (not filtered by today)
+- `allow_networking`: Shows if user allows others to follow them
 - Users without checklists are excluded from the response
 - Frontend handles all date filtering and logic
 
@@ -280,6 +284,20 @@ This field is useful for:
 - Understanding user activity patterns
 - Providing context for the regret index
 - Perfect compatibility with JavaScript `new Date()` parsing
+
+## Networking Status
+
+The **allow_networking** field indicates whether a user allows others to follow them:
+
+- **`true`**: User allows networking (others can follow)
+- **`false`**: User has disabled networking (others cannot follow)
+- **Default**: `true` (networking enabled by default)
+
+This field is useful for:
+- Showing networking status in user profiles
+- Displaying appropriate follow/unfollow buttons
+- Indicating when users have disabled networking
+- Handling networking permissions in the frontend
 
 ---
 

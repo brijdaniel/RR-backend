@@ -356,6 +356,7 @@ class NetworkListView(APIView):
                             "username": user.username,
                             "regret_index": float(latest_checklist.score),
                             "checklist_created_at": latest_checklist.created_at.astimezone(pytz.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                            "allow_networking": user.allow_networking,
                             "followers_count": max(0, user.followers_count),
                             "following_count": max(0, user.following_count),
                             "date_joined": user.date_joined
