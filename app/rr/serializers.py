@@ -26,11 +26,22 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ChecklistSerializer(serializers.ModelSerializer):
-    score = serializers.FloatField()  # Force float conversion to preserve decimals
+    score = serializers.SerializerMethodField()  # Use custom method for better control
     
     class Meta:
         model = Checklist
         fields = '__all__'
+    
+    def get_score(self, obj):
+        """Custom score handling to preserve decimal precision"""
+        try:
+            # Convert to float and preserve precision
+            score_value = float(obj.score)
+            print(f"DEBUG: Checklist {obj.id} - DB score: {obj.score}, Type: {type(obj.score)}, Converted: {score_value}")
+            return score_value
+        except Exception as e:
+            print(f"DEBUG: Error converting score for checklist {obj.id}: {e}")
+            return 1.0  # Fallback
 
 
 class RegretSerializer(serializers.ModelSerializer):
