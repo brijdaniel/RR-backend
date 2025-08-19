@@ -359,7 +359,7 @@ class NetworkListView(APIView):
                     if today_checklist:
                         # Format as ISO 8601 UTC with 'Z' suffix as required by frontend
                         # Must be: YYYY-MM-DDTHH:mm:ssZ (e.g., "2025-08-17T18:00:00Z")
-                        utc_time = today_checklist.created_at.astimezone(timezone.utc)
+                        utc_time = today_checklist.created_at.astimezone(pytz.UTC)
                         checklist_created_at = utc_time.strftime("%Y-%m-%dT%H:%M:%SZ")
                     
                     user_data.append({
