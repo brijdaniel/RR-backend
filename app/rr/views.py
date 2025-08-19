@@ -385,6 +385,17 @@ class NetworkSettingsView(APIView):
     """Update user's networking preferences"""
     permission_classes = [IsAuthenticated]
     
+    def get(self, request):
+        """Get current networking settings"""
+        try:
+            return Response({
+                "allow_networking": request.user.allow_networking,
+                "message": "Networking settings retrieved successfully"
+            }, status=200)
+        except Exception as e:
+            logger.error(f"Error retrieving networking settings: {e}")
+            return Response({"error": "Failed to retrieve networking settings"}, status=500)
+    
     def patch(self, request):
         """Update networking settings"""
         allow_networking = request.data.get('allow_networking')

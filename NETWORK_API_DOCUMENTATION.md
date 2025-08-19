@@ -202,6 +202,31 @@ curl -X PATCH "https://your-domain.com/api/network/settings/" \
 
 ---
 
+### 6. Get Current Network Settings
+
+**Endpoint:** `GET /api/network/settings/`
+
+**Description:** Retrieve your current networking preferences.
+
+**Response:**
+```json
+{
+    "allow_networking": true,
+    "message": "Networking settings retrieved successfully"
+}
+```
+
+**Error Responses:**
+- `500 Internal Server Error`: Failed to retrieve networking settings
+
+**Example:**
+```bash
+curl -X GET "https://your-domain.com/api/network/settings/" \
+  -H "Authorization: Bearer <your_jwt_token>"
+```
+
+---
+
 ## Data Models
 
 ### User Model (Updated)
@@ -368,6 +393,36 @@ if (validation.ok) {
         // 3. Update UI
         updateFollowButton(true);
         updateFollowerCount();
+    }
+}
+```
+
+### Get and Update Networking Settings
+```javascript
+// 1. Get current networking status
+const getSettings = await fetch('/api/network/settings/', {
+    headers: { 'Authorization': `Bearer ${token}` }
+});
+
+if (getSettings.ok) {
+    const currentSettings = await getSettings.json();
+    console.log('Current networking:', currentSettings.allow_networking);
+    
+    // 2. Update networking settings
+    const updateSettings = await fetch('/api/network/settings/', {
+        method: 'PATCH',
+        headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            allow_networking: !currentSettings.allow_networking
+        })
+    });
+    
+    if (updateSettings.ok) {
+        const newSettings = await updateSettings.json();
+        console.log('Updated networking:', newSettings.allow_networking);
     }
 }
 ```
