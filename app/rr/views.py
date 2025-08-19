@@ -17,6 +17,14 @@ from .filters import ChecklistFilter
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from django.db import IntegrityError
 
+# Date Format Requirements for checklist_created_at:
+# Format: ISO 8601 with UTC timezone
+# Example: "2025-08-17T18:00:00Z"
+# Breakdown: YYYY-MM-DDTHH:mm:ssZ (Z = UTC/Zulu time)
+# Must be a string, not datetime object
+# Must include Z suffix for UTC timezone
+# Must use T separator between date and time
+
 logger = logging.getLogger(__name__)
 
 class UserCreateView(CreateAPIView):
@@ -341,10 +349,24 @@ class NetworkListView(APIView):
             for user in users:
                 try:
                     regret_index = user.get_regret_index(today)
+                    
+                    # Get today's checklist creation time
+                    today_checklist = user.user_checklists.filter(
+                        created_at__date=today
+                    ).first()
+                    
+                    checklist_created_at = None
+                    if today_checklist:
+                        # Format as ISO 8601 UTC with 'Z' suffix as required by frontend
+                        # Must be: YYYY-MM-DDTHH:mm:ssZ (e.g., "2025-08-17T18:00:00Z")
+                        utc_time = today_checklist.created_at.astimezone(timezone.utc)
+                        checklist_created_at = utc_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+                    
                     user_data.append({
                         "id": user.id,
                         "username": user.username,
                         "regret_index": regret_index,
+                        "checklist_created_at": checklist_created_at,
                         "followers_count": max(0, user.followers_count),  # Ensure non-negative
                         "following_count": max(0, user.following_count),  # Ensure non-negative
                         "date_joined": user.date_joined

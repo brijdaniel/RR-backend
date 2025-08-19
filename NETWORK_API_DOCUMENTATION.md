@@ -130,6 +130,7 @@ curl -X DELETE "https://your-domain.com/api/network/unfollow/johndoe/" \
             "id": 123,
             "username": "johndoe",
             "regret_index": 0.75,
+            "checklist_created_at": "2024-03-15T08:00:00Z",
             "followers_count": 5,
             "following_count": 3,
             "date_joined": "2024-01-15T10:30:00Z"
@@ -138,6 +139,7 @@ curl -X DELETE "https://your-domain.com/api/network/unfollow/johndoe/" \
             "id": 456,
             "username": "janedoe",
             "regret_index": 0.25,
+            "checklist_created_at": "2024-03-15T09:30:00Z",
             "followers_count": 8,
             "following_count": 2,
             "date_joined": "2024-02-01T14:20:00Z"
@@ -231,6 +233,7 @@ curl -X PATCH "https://your-domain.com/api/network/settings/" \
     "id": 123,
     "username": "johndoe",
     "regret_index": 0.75,
+    "checklist_created_at": "2024-03-15T08:00:00Z",
     "followers_count": 5,
     "following_count": 3,
     "date_joined": "2024-01-15T10:30:00Z"
@@ -251,6 +254,26 @@ The index is calculated as:
 ```
 regret_index = incomplete_regrets / total_regrets
 ```
+
+## Checklist Creation Time
+
+The **checklist_created_at** field shows when the user created their daily checklist for the current day:
+
+- **Format**: ISO 8601 with UTC timezone
+- **Example**: `"2025-08-17T18:00:00Z"`
+- **Breakdown**: `YYYY-MM-DDTHH:mm:ssZ`
+  - Date: YYYY-MM-DD (2025-08-17)
+  - Time: HH:mm:ss (18:00:00)
+  - Timezone: Z (Zulu time = UTC)
+  - Separator: T between date and time
+- **Null value**: If no checklist exists for today
+- **Timezone**: Always in UTC (Z suffix)
+
+This field is useful for:
+- Showing when users started their daily habit tracking
+- Understanding user activity patterns
+- Providing context for the regret index
+- Perfect compatibility with JavaScript `new Date()` parsing
 
 ---
 
@@ -335,9 +358,13 @@ const response = await fetch('/api/network/list/following/', {
 if (response.ok) {
     const data = await response.json();
     
-    // Display users with their regret indexes
+    // Display users with their regret indexes and checklist creation times
     data.users.forEach(user => {
-        displayUser(user.username, user.regret_index);
+        const checklistTime = user.checklist_created_at 
+            ? new Date(user.checklist_created_at).toLocaleTimeString()
+            : 'No checklist today';
+            
+        displayUser(user.username, user.regret_index, checklistTime);
     });
 }
 ```
