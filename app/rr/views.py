@@ -11,10 +11,11 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db import transaction
 
-from .models import *
+from .models import User, Checklist, Regret, Network
 from .serializers import *
 from .filters import ChecklistFilter
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from django.db import IntegrityError
 
 logger = logging.getLogger(__name__)
 
@@ -201,3 +202,189 @@ class UserLoginOrRegisterView(CreateAPIView):
             serializer.is_valid(raise_exception=True)
             user = serializer.save()
             return Response(serializer.data, status=201)
+
+
+class NetworkValidationView(APIView):
+    """Validate username for network addition"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, username):
+        """Check if username is valid for following"""
+        if not username:
+            return Response({"error": "Username is required"}, status=400)
+        
+        try:
+            target_user = User.objects.get(username=username, is_active=True)
+            
+            # Check if user is trying to follow themselves
+            if target_user == request.user:
+                return Response({"error": "You cannot follow yourself"}, status=409)
+            
+            # Check if already following
+            if Network.objects.filter(follower=request.user, following=target_user).exists():
+                return Response({"error": "You are already following this user"}, status=409)
+            
+            # Check if target user allows networking
+            if not target_user.allow_networking:
+                return Response({"error": "This user has networking disabled"}, status=403)
+            
+            return Response({
+                "username": target_user.username,
+                "user_id": target_user.id,
+                "allow_networking": target_user.allow_networking
+            }, status=200)
+            
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        except Exception as e:
+            logger.error(f"Error validating username {username}: {e}")
+            return Response({"error": "Network operation failed"}, status=500)
+
+
+class NetworkFollowView(APIView):
+    """Add user to network (Follow)"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, username):
+        """Follow a user"""
+        if not username:
+            return Response({"error": "Username is required"}, status=400)
+        
+        try:
+            target_user = User.objects.get(username=username, is_active=True)
+            
+            # Check if user is trying to follow themselves
+            if target_user == request.user:
+                return Response({"error": "You cannot follow yourself"}, status=409)
+            
+            # Check if already following
+            if Network.objects.filter(follower=request.user, following=target_user).exists():
+                return Response({"error": "You are already following this user"}, status=409)
+            
+            # Check if target user allows networking
+            if not target_user.allow_networking:
+                return Response({"error": "This user has networking disabled"}, status=403)
+            
+            # Create network relationship
+            network = Network.objects.create(follower=request.user, following=target_user)
+            
+            return Response({
+                "message": f"Successfully followed {target_user.username}",
+                "network_id": network.id,
+                "following": target_user.username
+            }, status=201)
+            
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        except IntegrityError:
+            return Response({"error": "You are already following this user"}, status=409)
+        except Exception as e:
+            logger.error(f"Error following user {username}: {e}")
+            return Response({"error": "Network operation failed"}, status=500)
+
+
+class NetworkUnfollowView(APIView):
+    """Remove user from network (Unfollow)"""
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request, username):
+        """Unfollow a user"""
+        if not username:
+            return Response({"error": "Username is required"}, status=400)
+        
+        try:
+            target_user = User.objects.get(username=username, is_active=True)
+            
+            # Check if following relationship exists
+            network = Network.objects.filter(follower=request.user, following=target_user).first()
+            
+            if not network:
+                return Response({"error": "You are not following this user"}, status=404)
+            
+            # Delete network relationship
+            network.delete()
+            
+            return Response({
+                "message": f"Successfully unfollowed {target_user.username}"
+            }, status=200)
+            
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+        except Exception as e:
+            logger.error(f"Error unfollowing user {username}: {e}")
+            return Response({"error": "Network operation failed"}, status=500)
+
+
+class NetworkListView(APIView):
+    """Get network users (Following/Followers list)"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, list_type="following"):
+        """Get following or followers list"""
+        if list_type not in ["following", "followers"]:
+            return Response({"error": "Invalid list type. Use 'following' or 'followers'"}, status=400)
+        
+        try:
+            if list_type == "following":
+                # Get users that the current user follows
+                networks = Network.objects.filter(follower=request.user).select_related('following')
+                users = [network.following for network in networks]
+            else:
+                # Get users that follow the current user
+                networks = Network.objects.filter(following=request.user).select_related('follower')
+                users = [network.follower for network in networks]
+            
+            # Get regret indexes for today
+            today = timezone.now().date()
+            user_data = []
+            
+            for user in users:
+                try:
+                    regret_index = user.get_regret_index(today)
+                    user_data.append({
+                        "id": user.id,
+                        "username": user.username,
+                        "regret_index": regret_index,
+                        "followers_count": max(0, user.followers_count),  # Ensure non-negative
+                        "following_count": max(0, user.following_count),  # Ensure non-negative
+                        "date_joined": user.date_joined
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing user {user.id} in network list: {e}")
+                    # Skip problematic users but continue with others
+                    continue
+            
+            return Response({
+                "list_type": list_type,
+                "count": len(user_data),
+                "users": user_data
+            }, status=200)
+            
+        except Exception as e:
+            logger.error(f"Error getting {list_type} list: {e}")
+            return Response({"error": "Network operation failed"}, status=500)
+
+
+class NetworkSettingsView(APIView):
+    """Update user's networking preferences"""
+    permission_classes = [IsAuthenticated]
+    
+    def patch(self, request):
+        """Update networking settings"""
+        allow_networking = request.data.get('allow_networking')
+        
+        if allow_networking is None:
+            return Response({"error": "allow_networking field is required"}, status=400)
+        
+        try:
+            request.user.allow_networking = allow_networking
+            request.user.save(update_fields=['allow_networking'])
+            
+            return Response({
+                "message": "Networking settings updated successfully",
+                "allow_networking": request.user.allow_networking
+            }, status=200)
+            
+        except Exception as e:
+            logger.error(f"Error updating networking settings: {e}")
+            return Response({"error": "Failed to update networking settings"}, status=500)

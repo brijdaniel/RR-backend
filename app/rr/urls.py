@@ -41,6 +41,15 @@ urlpatterns += [
     path("api/checklists/<int:pk>/regrets/<int:id>/", RegretRetrieveUpdateView.as_view(), name="update_regrets"),
 ]
 
+# Network API
+urlpatterns += [
+    path("api/network/validate/<str:username>/", NetworkValidationView.as_view(), name="network_validate"),
+    path("api/network/follow/<str:username>/", NetworkFollowView.as_view(), name="network_follow"),
+    path("api/network/unfollow/<str:username>/", NetworkUnfollowView.as_view(), name="network_unfollow"),
+    path("api/network/list/<str:list_type>/", NetworkListView.as_view(), name="network_list"),
+    path("api/network/settings/", NetworkSettingsView.as_view(), name="network_settings"),
+]
+
 
 # Swagger
 urlpatterns += [

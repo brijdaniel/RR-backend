@@ -53,6 +53,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
+    allow_networking = models.BooleanField(default=True, help_text="Allow other users to follow this user")
+    followers_count = models.PositiveIntegerField(default=0)
+    following_count = models.PositiveIntegerField(default=0)
 
     objects = UserManager()
 
@@ -60,6 +63,42 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return str(self.username)
+    
+    def get_regret_index(self, date=None):
+        """Calculate user's regret index for a specific date"""
+        if date is None:
+            date = timezone.now().date()
+        
+        try:
+            checklist = self.user_checklists.filter(
+                created_at__date=date
+            ).first()
+            
+            if checklist:
+                return float(checklist.score)
+            return 1.0  # Default score if no checklist
+        except Exception as e:
+            logger.error(f"Error calculating regret index for user {self.id}: {e}")
+            return 1.0
+    
+    def refresh_counts(self):
+        """Refresh follower and following counts from actual relationships"""
+        try:
+            self.followers_count = self.followers.count()
+            self.following_count = self.following.count()
+            self.save(update_fields=['followers_count', 'following_count'])
+        except Exception as e:
+            logger.error(f"Error refreshing counts for user {self.id}: {e}")
+    
+    def save(self, *args, **kwargs):
+        """Override save to ensure counts are valid"""
+        # Ensure counts are never negative
+        if self.followers_count < 0:
+            self.followers_count = 0
+        if self.following_count < 0:
+            self.following_count = 0
+        
+        super().save(*args, **kwargs)
 
 
 class Checklist(models.Model):
@@ -82,3 +121,60 @@ class Regret(models.Model):
     description = models.CharField(max_length=255)
     created_at = models.DateTimeField(default=timezone.now)
     success = models.BooleanField(default=False)
+
+
+class Network(models.Model):
+    """Network relationship between users (following/followers)"""
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        unique_together = ('follower', 'following')
+        indexes = [
+            models.Index(fields=['follower', 'created_at']),
+            models.Index(fields=['following', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.follower.username} follows {self.following.username}"
+    
+    def save(self, *args, **kwargs):
+        """Override save to update user counts"""
+        # Prevent self-following
+        if self.follower == self.following:
+            raise ValidationError("Users cannot follow themselves")
+        
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        if is_new:
+            # Update follower and following counts using F() expressions to avoid race conditions
+            from django.db.models import F
+            User.objects.filter(id=self.following.id).update(
+                followers_count=F('followers_count') + 1
+            )
+            User.objects.filter(id=self.follower.id).update(
+                following_count=F('following_count') + 1
+            )
+    
+    def delete(self, *args, **kwargs):
+        """Override delete to update user counts"""
+        # Store references before deletion
+        following_id = self.following.id
+        follower_id = self.follower.id
+        
+        super().delete(*args, **kwargs)
+        
+        # Update follower and following counts using F() expressions with safety checks
+        from django.db.models import F
+        User.objects.filter(id=following_id).update(
+            followers_count=F('followers_count') - 1
+        )
+        User.objects.filter(id=follower_id).update(
+            following_count=F('following_count') - 1
+        )
+        
+        # Ensure counts never go below 0
+        User.objects.filter(id=following_id, followers_count__lt=0).update(followers_count=0)
+        User.objects.filter(id=follower_id, following_count__lt=0).update(following_count=0)
